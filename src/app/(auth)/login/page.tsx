@@ -2,35 +2,35 @@
 import { useState, useEffect } from 'react';
 import { Form, Input, Button, Tabs, App } from 'antd';
 import { UserOutlined, LockOutlined, MailOutlined } from '@ant-design/icons';
-import { useRouter } from 'next/navigation';
 import AuthBrand from '@/components/auth-brand';
+import { withBasePath } from '@/lib/base-path';
+import { request } from '@/lib/request';
 import { gradientBtnStyle } from '@/lib/styles';
 
 export default function LoginPage() {
-  const router = useRouter();
   const { message } = App.useApp();
   const [loading, setLoading] = useState(false);
   const [countdown, setCountdown] = useState(0);
   const [smtpEnabled, setSmtpEnabled] = useState(false);
 
   useEffect(() => {
-    fetch('/api/auth/smtp-status').then(r => r.json()).then(d => setSmtpEnabled(d.enabled)).catch(() => {});
+    request('/api/auth/smtp-status').then(r => r.json()).then(d => setSmtpEnabled(d.enabled)).catch(() => {});
   }, []);
 
   const handlePasswordLogin = async (values: { username: string; password: string }) => {
     setLoading(true);
     try {
-      const res = await fetch('/api/auth/login', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(values) });
+      const res = await request('/api/auth/login', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(values) });
       if (!res.ok) { const data = await res.json().catch(() => null); message.error(data?.error || '登录失败，请稍后再试'); return; }
       const data = await res.json();
       // Clear cluster selection so the new user doesn't inherit previous user's choice
       localStorage.removeItem('k8s-cluster');
-      if (data.mustChangePassword) { window.location.href = '/change-password'; } else { window.location.href = '/'; }
+      if (data.mustChangePassword) { window.location.href = withBasePath('/change-password'); } else { window.location.href = withBasePath('/'); }
     } finally { setLoading(false); }
   };
 
   const handleSendCode = async (email: string) => {
-    const res = await fetch('/api/auth/send-code', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ email }) });
+    const res = await request('/api/auth/send-code', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ email }) });
     if (res.ok) {
       message.success('验证码已发送，请查收邮箱');
       setCountdown(60);
@@ -44,11 +44,11 @@ export default function LoginPage() {
   const handleCodeLogin = async (values: { email: string; code: string }) => {
     setLoading(true);
     try {
-      const res = await fetch('/api/auth/verify-code', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(values) });
+      const res = await request('/api/auth/verify-code', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(values) });
       if (!res.ok) { const data = await res.json().catch(() => null); message.error(data?.error || '登录失败，请稍后再试'); return; }
       const data = await res.json();
       localStorage.removeItem('k8s-cluster');
-      if (data.mustChangePassword) { window.location.href = '/change-password'; } else { window.location.href = '/'; }
+      if (data.mustChangePassword) { window.location.href = withBasePath('/change-password'); } else { window.location.href = withBasePath('/'); }
     } finally { setLoading(false); }
   };
 

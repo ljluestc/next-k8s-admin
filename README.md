@@ -213,7 +213,10 @@ docker compose up -d
 | `SMTP_USER` | SMTP 用户名 | - |
 | `SMTP_PASS` | SMTP 密码 | - |
 | `SMTP_FROM` | 发件人邮箱 | `noreply@k8sadmin.local` |
+| `NEXT_PUBLIC_BASE_PATH` | 子路径部署前缀（如 `/k8s-admin`，留空表示根路径部署） | - |
 | `NEXT_PUBLIC_WS_URL` | WebSocket 地址 | `ws://localhost:3000/ws` |
+
+反向代理到子路径（例如 `https://example.com/k8s-admin`）时，需设置 `NEXT_PUBLIC_BASE_PATH=/k8s-admin` 并重新构建镜像/产物。
 
 ## 自动初始化
 

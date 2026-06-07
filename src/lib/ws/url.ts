@@ -1,3 +1,4 @@
+import { withBasePath } from '@/lib/base-path';
 /**
  * Derive WebSocket URL from browser location at runtime,
  * so it works in any deployment (Docker, reverse proxy, etc.)
@@ -6,5 +7,5 @@
 export function getWsUrl(): string {
   if (typeof window === 'undefined') return '';
   const protocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
-  return `${protocol}//${window.location.host}/ws`;
+  return `${protocol}//${window.location.host}${withBasePath('/ws')}`;
 }
