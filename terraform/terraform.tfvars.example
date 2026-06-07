@@ -5,12 +5,29 @@ aws_credentials_dir = "/home/your-user/.aws"
 # Optional overrides
 # app_image         = "twwch/k8s-admin:latest"
 # app_external_port = 3000
+# enable_swagger_ui = true
+# swagger_ui_external_port = 8081
+# swagger_spec_host_path = "../openapi/k8s-admin.yaml"
 # postgres_external_port = 5433
+# Example side-by-side deployment with existing :3002 stack:
+# app_external_port = 3004
+# postgres_external_port = 5434
+# swagger_ui_external_port = 8082
+# cluster_registration_api_base_url = "http://127.0.0.1:3004"
 # smtp_host         = "smtp.example.com"
 # smtp_port         = 587
 # smtp_user         = "smtp-user"
 # smtp_pass         = "smtp-password"
 # smtp_from         = "noreply@example.com"
+# next_public_dashboard_panel_url       = "http://localhost:3004/admin/panels/dashboard"
+# next_public_argocd_panel_url          = "http://localhost:3004/apps/releases"
+# next_public_argocd_release_dashboard_url = "http://localhost:3004/apps/releases"
+# next_public_prometheus_panel_url      = "http://localhost:3004/resources/workloads/pods"
+# next_public_istio_panel_url           = "http://localhost:3004/resources/networking/services"
+# next_public_trivy_operator_panel_url  = "http://localhost:3004/admin/panels/trivy"
+# next_public_falco_panel_url           = "http://localhost:3004/admin/panels/falco"
+# next_public_kyverno_panel_url         = "http://localhost:3004/admin/panels/kyverno"
+# next_public_gatekeeper_panel_url      = "http://localhost:3004/admin/panels/gatekeeper"
 
 # Optional: Terraform-managed local Kind cluster
 # create_kind_cluster          = true
@@ -18,3 +35,10 @@ aws_credentials_dir = "/home/your-user/.aws"
 # kind_cluster_name            = "k8s-admin-kind"
 # kind_cluster_display_name    = "Terraform Kind Cluster"
 # kind_kubeconfig_path         = "./.generated/kubeconfig-kind.yaml"
+# cluster_registration_admin_username        = "admin"
+# cluster_registration_admin_password        = "your-admin-password"
+# cluster_registration_client_runtime        = "python" # or "go"
+# cluster_registration_api_base_url          = "http://127.0.0.1:3000"
+# cluster_registration_cluster_description   = "Managed by Terraform API workflow"
+# cluster_registration_max_retries           = 30
+# cluster_registration_retry_interval_seconds = 2

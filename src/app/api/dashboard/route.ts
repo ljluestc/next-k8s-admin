@@ -5,6 +5,37 @@ import { eq, gte, and, sql, inArray } from 'drizzle-orm';
 import { validateSession } from '@/lib/auth/session';
 import { getK8sClient } from '@/lib/k8s/client-manager';
 import { getUserAccessibleClusterIds, getUserAccessibleNamespaces } from '@/lib/rbac/check';
+interface ClusterStat {
+  id: string;
+  name: string;
+  status: string;
+  nodes: number;
+  pods: number;
+}
+
+interface K8sEventItem {
+  type?: string;
+  reason?: string;
+  message?: string;
+  lastTimestamp?: string | Date;
+  metadata?: {
+    creationTimestamp?: string | Date;
+    namespace?: string;
+  };
+  involvedObject?: {
+    name?: string;
+  };
+}
+
+interface DashboardEventItem {
+  cluster: string;
+  type?: string;
+  reason?: string;
+  message?: string;
+  namespace?: string;
+  object?: string;
+  time?: string | Date;
+}
 
 export async function GET(req: NextRequest) {
   const auth = await validateSession();
@@ -36,10 +67,15 @@ export async function GET(req: NextRequest) {
     ? await clusterQuery.where(and(...conditions))
     : await clusterQuery;
 
-  // Today's releases count - filtered by same clusters
-  const today = new Date();
-  today.setHours(0, 0, 0, 0);
-  const releaseConditions = [gte(appReleases.createdAt, today)];
+  // Today's releases count from persisted release records, with configurable local day boundary (default UTC+8).
+  const tzOffsetHours = Number(process.env.DASHBOARD_TZ_OFFSET_HOURS || '8');
+  const tzOffsetMs = Number.isFinite(tzOffsetHours) ? tzOffsetHours * 60 * 60 * 1000 : 8 * 60 * 60 * 1000;
+  const shiftedNow = new Date(Date.now() + tzOffsetMs);
+  shiftedNow.setUTCHours(0, 0, 0, 0);
+  const todayStart = new Date(shiftedNow.getTime() - tzOffsetMs);
+  const releaseConditions = [
+    gte(appReleases.createdAt, todayStart),
+  ];
   if (selectedClusterId) {
     releaseConditions.push(eq(appReleases.clusterId, selectedClusterId));
   } else if (accessibleIds !== null) {
@@ -52,11 +88,11 @@ export async function GET(req: NextRequest) {
   // Aggregate K8s stats from connected clusters
   let totalPods = 0;
   let totalDeployments = 0;
-  const clusterStats = [];
-  const recentEvents: any[] = [];
+  const clusterStats: ClusterStat[] = [];
+  const recentEvents: DashboardEventItem[] = [];
 
   for (const cluster of allClusters) {
-    const stat: any = {
+    const stat: ClusterStat = {
       id: cluster.id,
       name: cluster.displayName || cluster.name,
       status: cluster.status,
@@ -120,14 +156,13 @@ export async function GET(req: NextRequest) {
             (ns) => clients.core.listNamespacedEvent({ namespace: ns }),
           );
           const sorted = eventItems
-            .sort((a: any, b: any) => {
+            .sort((a: K8sEventItem, b: K8sEventItem) => {
               const ta = a.lastTimestamp || a.metadata?.creationTimestamp;
               const tb = b.lastTimestamp || b.metadata?.creationTimestamp;
               return new Date(tb || 0).getTime() - new Date(ta || 0).getTime();
             })
             .slice(0, 5);
-
-          for (const evt of sorted as any[]) {
+          for (const evt of sorted) {
             recentEvents.push({
               cluster: cluster.displayName || cluster.name,
               type: evt.type,

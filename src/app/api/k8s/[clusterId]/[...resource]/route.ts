@@ -5,7 +5,7 @@ import { eq } from 'drizzle-orm';
 import { validateSession } from '@/lib/auth/session';
 import { getUserBindings, checkPermission, getUserAccessibleNamespaces } from '@/lib/rbac/check';
 import { writeAuditLog } from '@/lib/audit/logger';
-import { sendFeishuNotification } from '@/lib/notify/feishu';
+import { sendSlackNotification } from '@/lib/notify/slack';
 import { listResources, getResource, createResource, updateResource, deleteResource, type ResourceKind } from '@/lib/k8s/resources';
 import { writeReleaseLog } from '@/lib/release-logger';
 
@@ -17,6 +17,9 @@ function parseResourcePath(resource: string[]): { kind: ResourceKind; namespace?
   // /api/k8s/{clusterId}/namespaces/{namespace}/pods/{name}
   if (resource[0] === 'namespaces' && resource.length === 1) {
     return { kind: 'namespaces' };
+  }
+  if (resource[0] === 'namespaces' && resource.length === 2) {
+    return { kind: 'namespaces', name: resource[1] };
   }
   if (resource[0] === 'nodes') {
     return { kind: 'nodes', name: resource[1] };
@@ -61,7 +64,7 @@ async function notifyIfEnabled(clusterId: string, action: string, kind: string, 
   try {
     const [cluster] = await db.select().from(clusters).where(eq(clusters.id, clusterId)).limit(1);
     if (!cluster?.notifyEnabled || !cluster.webhookUrl) return;
-    sendFeishuNotification(cluster.webhookUrl, {
+    await sendSlackNotification(cluster.webhookUrl, {
       releaseName: resourceName,
       clusterName: cluster.displayName || cluster.name,
       namespace: namespace || '-',
@@ -143,8 +146,8 @@ async function handleRequest(req: NextRequest, params: Promise<Params>) {
         requestMethod: 'POST', requestPath: req.nextUrl.pathname,
         requestBody: body, responseStatus: 201,
       });
-      notifyIfEnabled(clusterId, 'create', kind, body.metadata?.name || '', namespace, auth.user.username, undefined, body);
-      writeReleaseLog({
+      await notifyIfEnabled(clusterId, 'create', kind, body.metadata?.name || '', namespace, auth.user.username, undefined, body);
+      await writeReleaseLog({
         action: 'create', kind, resourceName: body.metadata?.name || '',
         clusterId, namespace: namespace || null, userId: auth.user.id, requestBody: body,
       });
@@ -162,8 +165,8 @@ async function handleRequest(req: NextRequest, params: Promise<Params>) {
         requestMethod: 'PUT', requestPath: req.nextUrl.pathname,
         requestBody: body, responseStatus: 200,
       });
-      notifyIfEnabled(clusterId, 'update', kind, name, namespace, auth.user.username, changeMessage, body);
-      writeReleaseLog({
+      await notifyIfEnabled(clusterId, 'update', kind, name, namespace, auth.user.username, changeMessage, body);
+      await writeReleaseLog({
         action: 'update', kind, resourceName: name,
         clusterId, namespace: namespace || null, userId: auth.user.id, requestBody: body,
         message: changeMessage,
@@ -179,8 +182,8 @@ async function handleRequest(req: NextRequest, params: Promise<Params>) {
         requestMethod: 'DELETE', requestPath: req.nextUrl.pathname,
         responseStatus: 200,
       });
-      notifyIfEnabled(clusterId, 'delete', kind, name, namespace, auth.user.username);
-      writeReleaseLog({
+      await notifyIfEnabled(clusterId, 'delete', kind, name, namespace, auth.user.username);
+      await writeReleaseLog({
         action: 'delete', kind, resourceName: name,
         clusterId, namespace: namespace || null, userId: auth.user.id,
       });

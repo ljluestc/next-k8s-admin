@@ -1,0 +1,348 @@
+openapi: 3.0.3
+info:
+  title: K8s Admin Launch API
+  version: 1.1.0
+  description: |
+    API contract used by Python/Go/Terraform launch flows to operate the same admin instance.
+    Recommended upsert workflow:
+      1) POST /api/auth/login
+      2) GET /api/clusters
+      3) POST /api/clusters (create) OR PUT /api/clusters/{id} (update)
+      4) POST /api/clusters/{id}/test (optional connectivity verification with retries)
+      5) GET /api/dashboard (optional summary check)
+servers:
+  - url: http://127.0.0.1:3002
+    description: Local admin instance
+security:
+  - sessionCookie: []
+tags:
+  - name: auth
+  - name: clusters
+  - name: dashboard
+paths:
+  /api/auth/login:
+    post:
+      tags: [auth]
+      summary: Login and set session cookie
+      security: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/LoginRequest'
+      responses:
+        '200':
+          description: Login success
+          headers:
+            Set-Cookie:
+              schema:
+                type: string
+              description: Includes k8s_session cookie used for subsequent API calls.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/LoginResponse'
+        '401':
+          description: Invalid credentials
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '423':
+          description: Account locked
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '429':
+          description: Rate limited
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+  /api/auth/me:
+    get:
+      tags: [auth]
+      summary: Read current session profile
+      responses:
+        '200':
+          description: Session valid
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SessionUser'
+        '401':
+          description: Not logged in
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '403':
+          description: Session user disabled
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+  /api/clusters:
+    get:
+      tags: [clusters]
+      summary: List visible clusters (used to find upsert target by name)
+      responses:
+        '200':
+          description: Cluster list
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Cluster'
+        '401':
+          description: Not logged in
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+    post:
+      tags: [clusters]
+      summary: Create cluster (upsert create path)
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ClusterCreateRequest'
+      responses:
+        '201':
+          description: Cluster created
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Cluster'
+        '401':
+          description: Not logged in
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+  /api/clusters/{id}:
+    put:
+      tags: [clusters]
+      summary: Update cluster (upsert update path)
+      parameters:
+        - $ref: '#/components/parameters/ClusterId'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ClusterUpdateRequest'
+      responses:
+        '200':
+          description: Cluster updated
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Cluster'
+        '401':
+          description: Not logged in
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+  /api/clusters/{id}/test:
+    post:
+      tags: [clusters]
+      summary: Test cluster connectivity
+      parameters:
+        - $ref: '#/components/parameters/ClusterId'
+      responses:
+        '200':
+          description: Connectivity success
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ClusterTestResponse'
+        '400':
+          description: Connectivity failed
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ClusterTestResponse'
+        '401':
+          description: Not logged in
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+  /api/dashboard:
+    get:
+      tags: [dashboard]
+      summary: Dashboard summary used for launch verification
+      responses:
+        '200':
+          description: Dashboard metrics
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/DashboardSummary'
+        '401':
+          description: Not logged in
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+components:
+  securitySchemes:
+    sessionCookie:
+      type: apiKey
+      in: cookie
+      name: k8s_session
+  parameters:
+    ClusterId:
+      name: id
+      in: path
+      required: true
+      schema:
+        type: string
+  schemas:
+    ErrorResponse:
+      type: object
+      properties:
+        error:
+          type: string
+      required: [error]
+    LoginRequest:
+      type: object
+      properties:
+        username:
+          type: string
+        password:
+          type: string
+      required: [username, password]
+    LoginResponse:
+      type: object
+      properties:
+        mustChangePassword:
+          type: boolean
+      required: [mustChangePassword]
+    SessionUser:
+      type: object
+      properties:
+        id:
+          type: string
+        username:
+          type: string
+        email:
+          type: string
+        mustChangePassword:
+          type: boolean
+        wsToken:
+          type: string
+        isSuperAdmin:
+          type: boolean
+      required: [id, username, mustChangePassword, wsToken, isSuperAdmin]
+    Cluster:
+      type: object
+      properties:
+        id:
+          type: string
+        name:
+          type: string
+        displayName:
+          type: string
+        apiServerUrl:
+          type: string
+        authType:
+          type: string
+          enum: [kubeconfig, token]
+        status:
+          type: string
+        lastHealthCheckAt:
+          type: string
+          format: date-time
+          nullable: true
+        description:
+          type: string
+          nullable: true
+        webhookUrl:
+          type: string
+          nullable: true
+        notifyEnabled:
+          type: boolean
+        createdAt:
+          type: string
+          format: date-time
+      required: [id, name, displayName, apiServerUrl, authType]
+    ClusterCreateRequest:
+      type: object
+      properties:
+        name:
+          type: string
+        displayName:
+          type: string
+        apiServerUrl:
+          type: string
+        authType:
+          type: string
+          enum: [kubeconfig, token]
+        kubeconfig:
+          type: string
+        saToken:
+          type: string
+        caCert:
+          type: string
+        description:
+          type: string
+        webhookUrl:
+          type: string
+          nullable: true
+        notifyEnabled:
+          type: boolean
+      required: [name, displayName, apiServerUrl, authType]
+    ClusterUpdateRequest:
+      type: object
+      properties:
+        displayName:
+          type: string
+        apiServerUrl:
+          type: string
+        authType:
+          type: string
+          enum: [kubeconfig, token]
+        kubeconfig:
+          type: string
+        saToken:
+          type: string
+        caCert:
+          type: string
+        description:
+          type: string
+        webhookUrl:
+          type: string
+          nullable: true
+        notifyEnabled:
+          type: boolean
+      required: [displayName, apiServerUrl, authType]
+    ClusterTestResponse:
+      type: object
+      properties:
+        success:
+          type: boolean
+        version:
+          type: string
+        error:
+          type: string
+      required: [success]
+    DashboardSummary:
+      type: object
+      properties:
+        clusterCount:
+          type: integer
+        podCount:
+          type: integer
+        deploymentCount:
+          type: integer
+        todayReleaseCount:
+          type: integer
+      required: [clusterCount, podCount, deploymentCount, todayReleaseCount]

@@ -31,11 +31,37 @@ services:
       SMTP_USER: ${SMTP_USER}
       SMTP_PASS: ${SMTP_PASS}
       SMTP_FROM: ${SMTP_FROM:-noreply@k8sadmin.local}
+      # CNCF tool panel URLs
+      NEXT_PUBLIC_DASHBOARD_PANEL_URL: ${NEXT_PUBLIC_DASHBOARD_PANEL_URL:-}
+      NEXT_PUBLIC_ARGOCD_PANEL_URL: ${NEXT_PUBLIC_ARGOCD_PANEL_URL:-http://localhost:8080}
+      NEXT_PUBLIC_PROMETHEUS_PANEL_URL: ${NEXT_PUBLIC_PROMETHEUS_PANEL_URL:-http://localhost:9090}
+      NEXT_PUBLIC_FALCO_PANEL_URL: ${NEXT_PUBLIC_FALCO_PANEL_URL:-}
+      NEXT_PUBLIC_TRIVY_OPERATOR_PANEL_URL: ${NEXT_PUBLIC_TRIVY_OPERATOR_PANEL_URL:-}
+      NEXT_PUBLIC_KYVERNO_PANEL_URL: ${NEXT_PUBLIC_KYVERNO_PANEL_URL:-}
+      NEXT_PUBLIC_GATEKEEPER_PANEL_URL: ${NEXT_PUBLIC_GATEKEEPER_PANEL_URL:-}
     depends_on:
       db:
         condition: service_healthy
     command: >
       sh -c "npx drizzle-kit push && npx tsx src/lib/db/seed.ts && NODE_ENV=production npx tsx server.ts"
+
+  port-forwarder:
+    image: bitnami/kubectl:latest
+    volumes:
+      - /tmp/kind-config.yaml:/root/.kube/config:ro
+    environment:
+      KUBECONFIG: /root/.kube/config
+    command: >
+      sh -c "
+        kubectl port-forward -n argocd svc/argocd-server 8080:80 --address 0.0.0.0 &
+        kubectl port-forward -n monitoring svc/prometheus-kube-prometheus-prometheus 9090:9090 --address 0.0.0.0 &
+        kubectl port-forward -n monitoring svc/prometheus-grafana 3001:80 --address 0.0.0.0 &
+        wait
+      "
+    ports:
+      - "8080:8080"
+      - "9090:9090"
+      - "3001:3001"
 
 volumes:
   pgdata:

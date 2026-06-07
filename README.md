@@ -14,7 +14,7 @@
 - **实时日志** - Pod 日志实时流式查看
 - **Dashboard** - 集群状态总览、Pod/Deployment 统计、最近事件，按用户权限过滤
 - **审计日志** - 全面记录用户操作
-- **飞书通知** - 部署/回滚时通过飞书 Webhook 发送通知
+- **Slack 通知** - 部署/回滚时通过 Slack Webhook 发送通知
 
 ## 技术栈
 
@@ -130,11 +130,11 @@
 <table>
   <tr>
     <td><img src="images/发布记录.png" alt="发布记录" /></td>
-    <td><img src="images/飞书通知卡片.png" alt="飞书通知卡片" /></td>
+    <td><img src="images/飞书通知卡片.png" alt="Slack 通知卡片" /></td>
   </tr>
   <tr>
     <td align="center">发布记录</td>
-    <td align="center">飞书通知卡片</td>
+    <td align="center">Slack 通知卡片</td>
   </tr>
 </table>
 
@@ -273,6 +273,26 @@ cd terraform
 terraform destroy
 ```
 
+### Swagger 合约与 Python/Go SDK
+
+- OpenAPI/Swagger：`openapi/k8s-admin.yaml`
+- Python 客户端：`sdk/python/client.py`
+- Go 客户端：`sdk/go/client/client.go`
+
+快速验证：
+
+```bash
+# Python
+cd sdk/python
+python3 -m venv .venv && source .venv/bin/activate
+pip install -r requirements.txt
+python example.py
+
+# Go
+cd ../go
+go run ./cmd/adminctl --base-url http://localhost:3000 --username admin --password change-me
+```
+
 ### 环境变量
 
 | 变量 | 说明 | 默认值 |
@@ -286,6 +306,16 @@ terraform destroy
 | `SMTP_PASS` | SMTP 密码 | - |
 | `SMTP_FROM` | 发件人邮箱 | `noreply@k8sadmin.local` |
 | `NEXT_PUBLIC_WS_URL` | WebSocket 地址 | `ws://localhost:3000/ws` |
+| `NEXT_PUBLIC_DASHBOARD_PANEL_URL` | 外部 Dashboard 面板地址（系统管理 > 平台面板） | - |
+| `NEXT_PUBLIC_ARGOCD_PANEL_URL` | Argo CD 面板地址（Dashboard > 运维面板） | - |
+| `NEXT_PUBLIC_ARGOCD_RELEASE_DASHBOARD_URL` | Argo CD 发布看板地址（系统管理 > 平台面板） | - |
+| `NEXT_PUBLIC_PROMETHEUS_PANEL_URL` | Prometheus 面板地址（Dashboard > 运维面板） | - |
+| `NEXT_PUBLIC_ISTIO_PANEL_URL` | Istio 面板地址（Dashboard > 运维面板） | - |
+| `NEXT_PUBLIC_TRIVY_OPERATOR_PANEL_URL` | Trivy Operator 安全面板地址 | - |
+| `NEXT_PUBLIC_FALCO_PANEL_URL` | Falco 安全面板地址 | - |
+| `NEXT_PUBLIC_KYVERNO_PANEL_URL` | Kyverno 策略面板地址 | - |
+| `NEXT_PUBLIC_GATEKEEPER_PANEL_URL` | OPA Gatekeeper 策略审计面板地址 | - |
+| `DASHBOARD_TZ_OFFSET_HOURS` | Dashboard“今日发布”统计时区偏移（小时，默认 UTC+8） | `8` |
 
 ## 自动初始化
 

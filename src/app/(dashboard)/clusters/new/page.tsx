@@ -1,6 +1,6 @@
 'use client';
 
-import { Form, Input, Select, Button, App, Switch, Typography, Steps } from 'antd';
+import { Form, Input, Button, App, Switch, Typography, Steps } from 'antd';
 import {
   ClusterOutlined, SafetyCertificateOutlined, BellOutlined,
   KeyOutlined, FileTextOutlined, CloudServerOutlined,
@@ -104,7 +104,7 @@ export default function NewClusterPage() {
         items={[
           { title: '基本信息', icon: <ClusterOutlined /> },
           { title: '认证配置', icon: <SafetyCertificateOutlined /> },
-          { title: '通知设置', icon: <BellOutlined /> },
+          { title: 'Slack 通知', icon: <BellOutlined /> },
         ]}
       />
 
@@ -311,9 +311,9 @@ export default function NewClusterPage() {
                 <BellOutlined />
               </div>
               <div>
-                <Text strong>发版通知</Text>
+                <Text strong>变更通知（可选）</Text>
                 <br />
-                <Text type="secondary" style={{ fontSize: 12 }}>配置部署变更时的通知推送</Text>
+                <Text type="secondary" style={{ fontSize: 12 }}>配置发布/回滚时的 Slack Webhook 推送</Text>
               </div>
             </div>
 
@@ -328,9 +328,9 @@ export default function NewClusterPage() {
               marginBottom: notifyEnabled ? 16 : 0,
             }}>
               <div>
-                <Text strong>飞书通知</Text>
+                <Text strong>Slack 通知</Text>
                 <br />
-                <Text type="secondary" style={{ fontSize: 12 }}>发布/回滚时自动推送通知到飞书群</Text>
+                <Text type="secondary" style={{ fontSize: 12 }}>发布/回滚时自动推送通知到 Slack 频道</Text>
               </div>
               <Switch checked={notifyEnabled} onChange={setNotifyEnabled} />
             </div>
@@ -338,21 +338,15 @@ export default function NewClusterPage() {
             {notifyEnabled && (
               <Form.Item
                 name="webhookUrl"
-                label={<Text strong>飞书 Webhook 地址</Text>}
+                label={<Text strong>Slack Webhook 地址</Text>}
                 rules={[{ required: true, message: '启用通知时必须填写 Webhook 地址' }]}
               >
                 <Input
-                  placeholder="https://open.feishu.cn/open-apis/bot/v2/hook/xxx"
+                  placeholder="https://hooks.slack.com/services/xxx/yyy/zzz"
                   size="large"
                   style={{ borderRadius: 8 }}
                 />
               </Form.Item>
-            )}
-
-            {!notifyEnabled && (
-              <div style={{ textAlign: 'center', padding: '24px 0 8px', color: '#94a3b8', fontSize: 13 }}>
-                暂不配置通知，可在集群设置中随时开启
-              </div>
             )}
           </div>
         </div>

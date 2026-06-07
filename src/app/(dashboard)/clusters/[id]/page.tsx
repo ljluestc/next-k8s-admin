@@ -1,6 +1,6 @@
 'use client';
 
-import { Card, Descriptions, Tag, Form, Input, Switch, Button, App, Select, Tabs, Space } from 'antd';
+import { Card, Descriptions, Tag, Form, Input, Switch, Button, App, Tabs, Space } from 'antd';
 import { CheckCircleOutlined, CloseCircleOutlined, MinusCircleOutlined, SaveOutlined } from '@ant-design/icons';
 import { useRequest } from 'ahooks';
 import { useParams, useRouter } from 'next/navigation';
@@ -43,7 +43,14 @@ export default function ClusterDetailPage() {
     }
   }, [cluster, basicForm, notifyForm]);
 
-  const handleSaveBasic = async (values: any) => {
+  const handleSaveBasic = async (values: {
+    displayName: string;
+    apiServerUrl: string;
+    description?: string;
+    kubeconfig?: string;
+    saToken?: string;
+    caCert?: string;
+  }) => {
     setSaving(true);
     try {
       const res = await request(`/api/clusters/${id}`, {
@@ -65,7 +72,10 @@ export default function ClusterDetailPage() {
     }
   };
 
-  const handleSaveNotify = async (values: any) => {
+  const handleSaveNotify = async (values: {
+    webhookUrl?: string;
+    notifyEnabled?: boolean;
+  }) => {
     setSaving(true);
     try {
       const res = await request(`/api/clusters/${id}`, {
@@ -159,11 +169,11 @@ export default function ClusterDetailPage() {
           },
           {
             key: 'notify',
-            label: '发版通知',
+            label: '变更通知',
             children: (
               <Card>
                 <Form form={notifyForm} layout="vertical" onFinish={handleSaveNotify} style={{ maxWidth: 600 }}>
-                  <Form.Item name="notifyEnabled" label="启用飞书通知" valuePropName="checked">
+                  <Form.Item name="notifyEnabled" label="启用 Slack 通知" valuePropName="checked">
                     <Switch />
                   </Form.Item>
                   <Form.Item noStyle shouldUpdate={(prev, cur) => prev.notifyEnabled !== cur.notifyEnabled}>
@@ -171,11 +181,11 @@ export default function ClusterDetailPage() {
                       getFieldValue('notifyEnabled') ? (
                         <Form.Item
                           name="webhookUrl"
-                          label="飞书 Webhook 地址"
+                          label="Slack Webhook 地址"
                           rules={[{ required: true, message: '请填写 Webhook 地址' }]}
-                          extra="在飞书群设置 > 群机器人 > 自定义机器人中获取"
+                          extra="在 Slack Incoming Webhooks 配置中获取"
                         >
-                          <Input placeholder="https://open.feishu.cn/open-apis/bot/v2/hook/xxx" />
+                          <Input placeholder="https://hooks.slack.com/services/xxx/yyy/zzz" />
                         </Form.Item>
                       ) : null
                     }

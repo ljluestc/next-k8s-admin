@@ -78,6 +78,7 @@ export async function listResources(clusterId: string, kind: ResourceKind, names
 export async function getResource(clusterId: string, kind: ResourceKind, name: string, namespace?: string) {
   const clients = await getK8sClient(clusterId);
   switch (kind) {
+    case 'namespaces': return clients.core.readNamespace({ name });
     case 'pods': return clients.core.readNamespacedPod({ name, namespace: namespace! });
     case 'deployments': return clients.apps.readNamespacedDeployment({ name, namespace: namespace! });
     case 'services': return clients.core.readNamespacedService({ name, namespace: namespace! });
@@ -87,7 +88,9 @@ export async function getResource(clusterId: string, kind: ResourceKind, name: s
     case 'statefulsets': return clients.apps.readNamespacedStatefulSet({ name, namespace: namespace! });
     case 'daemonsets': return clients.apps.readNamespacedDaemonSet({ name, namespace: namespace! });
     case 'jobs': return clients.batch.readNamespacedJob({ name, namespace: namespace! });
+    case 'cronjobs': return clients.batch.readNamespacedCronJob({ name, namespace: namespace! });
     case 'persistentvolumeclaims': return clients.core.readNamespacedPersistentVolumeClaim({ name, namespace: namespace! });
+    case 'storageclasses': return clients.storage.readStorageClass({ name });
     default: throw new Error(`GET not supported for ${kind}`);
   }
 }
@@ -95,6 +98,7 @@ export async function getResource(clusterId: string, kind: ResourceKind, name: s
 export async function createResource(clusterId: string, kind: ResourceKind, body: any, namespace?: string) {
   const clients = await getK8sClient(clusterId);
   switch (kind) {
+    case 'namespaces': return clients.core.createNamespace({ body });
     case 'deployments': return clients.apps.createNamespacedDeployment({ namespace: namespace!, body });
     case 'services': return clients.core.createNamespacedService({ namespace: namespace!, body });
     case 'configmaps': return clients.core.createNamespacedConfigMap({ namespace: namespace!, body });
@@ -103,6 +107,8 @@ export async function createResource(clusterId: string, kind: ResourceKind, body
     case 'statefulsets': return clients.apps.createNamespacedStatefulSet({ namespace: namespace!, body });
     case 'daemonsets': return clients.apps.createNamespacedDaemonSet({ namespace: namespace!, body });
     case 'jobs': return clients.batch.createNamespacedJob({ namespace: namespace!, body });
+    case 'cronjobs': return clients.batch.createNamespacedCronJob({ namespace: namespace!, body });
+    case 'storageclasses': return clients.storage.createStorageClass({ body });
     default: throw new Error(`CREATE not supported for ${kind}`);
   }
 }
@@ -110,6 +116,7 @@ export async function createResource(clusterId: string, kind: ResourceKind, body
 export async function updateResource(clusterId: string, kind: ResourceKind, name: string, body: any, namespace?: string) {
   const clients = await getK8sClient(clusterId);
   switch (kind) {
+    case 'namespaces': return clients.core.replaceNamespace({ name, body });
     case 'deployments': return clients.apps.replaceNamespacedDeployment({ name, namespace: namespace!, body });
     case 'services': return clients.core.replaceNamespacedService({ name, namespace: namespace!, body });
     case 'configmaps': return clients.core.replaceNamespacedConfigMap({ name, namespace: namespace!, body });
@@ -117,6 +124,10 @@ export async function updateResource(clusterId: string, kind: ResourceKind, name
     case 'ingresses': return clients.networking.replaceNamespacedIngress({ name, namespace: namespace!, body });
     case 'statefulsets': return clients.apps.replaceNamespacedStatefulSet({ name, namespace: namespace!, body });
     case 'daemonsets': return clients.apps.replaceNamespacedDaemonSet({ name, namespace: namespace!, body });
+    case 'jobs': return clients.batch.replaceNamespacedJob({ name, namespace: namespace!, body });
+    case 'cronjobs': return clients.batch.replaceNamespacedCronJob({ name, namespace: namespace!, body });
+    case 'persistentvolumeclaims': return clients.core.replaceNamespacedPersistentVolumeClaim({ name, namespace: namespace!, body });
+    case 'storageclasses': return clients.storage.replaceStorageClass({ name, body });
     default: throw new Error(`UPDATE not supported for ${kind}`);
   }
 }
@@ -150,6 +161,7 @@ export async function applyResource(clusterId: string, kind: ResourceKind, body:
 export async function deleteResource(clusterId: string, kind: ResourceKind, name: string, namespace?: string) {
   const clients = await getK8sClient(clusterId);
   switch (kind) {
+    case 'namespaces': return clients.core.deleteNamespace({ name });
     case 'pods': return clients.core.deleteNamespacedPod({ name, namespace: namespace! });
     case 'deployments': return clients.apps.deleteNamespacedDeployment({ name, namespace: namespace! });
     case 'services': return clients.core.deleteNamespacedService({ name, namespace: namespace! });
@@ -159,8 +171,10 @@ export async function deleteResource(clusterId: string, kind: ResourceKind, name
     case 'statefulsets': return clients.apps.deleteNamespacedStatefulSet({ name, namespace: namespace! });
     case 'daemonsets': return clients.apps.deleteNamespacedDaemonSet({ name, namespace: namespace! });
     case 'jobs': return clients.batch.deleteNamespacedJob({ name, namespace: namespace! });
+    case 'cronjobs': return clients.batch.deleteNamespacedCronJob({ name, namespace: namespace! });
     case 'persistentvolumeclaims': return clients.core.deleteNamespacedPersistentVolumeClaim({ name, namespace: namespace! });
     case 'persistentvolumes': return clients.core.deletePersistentVolume({ name });
+    case 'storageclasses': return clients.storage.deleteStorageClass({ name });
     default: throw new Error(`DELETE not supported for ${kind}`);
   }
 }

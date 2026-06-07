@@ -7,7 +7,7 @@ import { ConfigProvider, Dropdown, Avatar, App, Result, Button } from 'antd';
 const ProLayout = dynamic(() => import('@ant-design/pro-layout').then(m => m.ProLayout), { ssr: false });
 import {
   DashboardOutlined, ClusterOutlined, CloudServerOutlined,
-  SettingOutlined, FileTextOutlined,
+  SettingOutlined, FileTextOutlined, ApiOutlined,
   UserOutlined, SafetyOutlined, AuditOutlined,
   AppstoreOutlined, RocketOutlined, DatabaseOutlined,
   GlobalOutlined, LogoutOutlined,
@@ -72,6 +72,7 @@ const adminMenu = {
   children: [
     { path: '/admin/users', name: '用户管理', icon: <UserOutlined /> },
     { path: '/admin/roles', name: '角色管理', icon: <SafetyOutlined /> },
+    { path: '/admin/panels', name: '平台面板', icon: <ApiOutlined /> },
     { path: '/clusters', name: '集群管理', icon: <ClusterOutlined /> },
     { path: '/admin/audit', name: '审计日志', icon: <AuditOutlined /> },
   ],

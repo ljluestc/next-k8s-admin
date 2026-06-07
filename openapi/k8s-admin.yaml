@@ -1,0 +1,605 @@
+openapi: 3.0.3
+info:
+  title: K8s Admin API
+  version: 1.0.0
+  description: Core API contract used by UI, Python/Go clients, and Terraform-driven launch workflows.
+servers:
+  - url: http://localhost:3000
+security:
+  - sessionCookie: []
+tags:
+  - name: auth
+  - name: clusters
+  - name: dashboard
+  - name: releases
+  - name: platform-panels
+paths:
+  /api/auth/login:
+    post:
+      tags: [auth]
+      summary: Login and establish session cookie
+      security: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/LoginRequest'
+      responses:
+        '200':
+          description: Logged in successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/LoginResponse'
+        '401':
+          description: Invalid credentials
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '423':
+          description: Account temporarily locked
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '429':
+          description: Rate limited
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+  /api/auth/logout:
+    post:
+      tags: [auth]
+      summary: Logout current session
+      responses:
+        '200':
+          description: Logged out
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+  /api/auth/me:
+    get:
+      tags: [auth]
+      summary: Get current user profile
+      responses:
+        '200':
+          description: Current authenticated user
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/UserProfile'
+        '401':
+          description: Not logged in
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '403':
+          description: Session user disabled
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+  /api/clusters:
+    get:
+      tags: [clusters]
+      summary: List clusters visible to current user
+      responses:
+        '200':
+          description: Cluster list
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Cluster'
+        '401':
+          description: Not logged in
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+    post:
+      tags: [clusters]
+      summary: Create a new cluster
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ClusterCreateRequest'
+      responses:
+        '201':
+          description: Cluster created
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Cluster'
+        '401':
+          description: Not logged in
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+  /api/clusters/{id}:
+    get:
+      tags: [clusters]
+      summary: Get cluster detail
+      parameters:
+        - $ref: '#/components/parameters/ClusterId'
+      responses:
+        '200':
+          description: Cluster detail
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Cluster'
+        '401':
+          description: Not logged in
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '404':
+          description: Cluster not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+    put:
+      tags: [clusters]
+      summary: Update cluster metadata or credentials
+      parameters:
+        - $ref: '#/components/parameters/ClusterId'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ClusterUpdateRequest'
+      responses:
+        '200':
+          description: Cluster updated
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Cluster'
+        '401':
+          description: Not logged in
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+    delete:
+      tags: [clusters]
+      summary: Delete cluster
+      parameters:
+        - $ref: '#/components/parameters/ClusterId'
+      responses:
+        '200':
+          description: Deletion response
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+        '401':
+          description: Not logged in
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+  /api/clusters/{id}/test:
+    post:
+      tags: [clusters]
+      summary: Test cluster connectivity
+      parameters:
+        - $ref: '#/components/parameters/ClusterId'
+      responses:
+        '200':
+          description: Connectivity success
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ClusterTestResponse'
+        '400':
+          description: Connectivity failed
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ClusterTestResponse'
+        '401':
+          description: Not logged in
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+  /api/dashboard:
+    get:
+      tags: [dashboard]
+      summary: Get dashboard summary and recent events
+      parameters:
+        - name: clusterId
+          in: query
+          schema:
+            type: string
+          required: false
+      responses:
+        '200':
+          description: Dashboard summary
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/DashboardSummary'
+        '401':
+          description: Not logged in
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+  /api/apps/releases:
+    get:
+      tags: [releases]
+      summary: List release records
+      parameters:
+        - name: clusterId
+          in: query
+          schema:
+            type: string
+          required: false
+        - name: page
+          in: query
+          schema:
+            type: integer
+            minimum: 1
+          required: false
+        - name: pageSize
+          in: query
+          schema:
+            type: integer
+            minimum: 1
+          required: false
+      responses:
+        '200':
+          description: Release records
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/ReleaseRecord'
+        '401':
+          description: Not logged in
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+  /api/platform-panels:
+    get:
+      tags: [platform-panels]
+      summary: Read panel health summary for selected/active cluster
+      parameters:
+        - name: clusterId
+          in: query
+          schema:
+            type: string
+          required: false
+      responses:
+        '200':
+          description: Panel summary
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PlatformPanelsResponse'
+        '401':
+          description: Not logged in
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '403':
+          description: No accessible cluster
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+components:
+  securitySchemes:
+    sessionCookie:
+      type: apiKey
+      in: cookie
+      name: k8s_session
+  parameters:
+    ClusterId:
+      name: id
+      in: path
+      required: true
+      schema:
+        type: string
+  schemas:
+    ErrorResponse:
+      type: object
+      properties:
+        error:
+          type: string
+      required: [error]
+    LoginRequest:
+      type: object
+      properties:
+        username:
+          type: string
+        password:
+          type: string
+      required: [username, password]
+    LoginResponse:
+      type: object
+      properties:
+        mustChangePassword:
+          type: boolean
+      required: [mustChangePassword]
+    UserProfile:
+      type: object
+      properties:
+        id:
+          type: string
+        username:
+          type: string
+        email:
+          type: string
+        mustChangePassword:
+          type: boolean
+        wsToken:
+          type: string
+        isSuperAdmin:
+          type: boolean
+      required: [id, username, mustChangePassword, wsToken, isSuperAdmin]
+    Cluster:
+      type: object
+      properties:
+        id:
+          type: string
+        name:
+          type: string
+        displayName:
+          type: string
+        apiServerUrl:
+          type: string
+        authType:
+          type: string
+          enum: [kubeconfig, token]
+        status:
+          type: string
+        lastHealthCheckAt:
+          type: string
+          format: date-time
+          nullable: true
+        description:
+          type: string
+          nullable: true
+        webhookUrl:
+          type: string
+          nullable: true
+        notifyEnabled:
+          type: boolean
+        createdAt:
+          type: string
+          format: date-time
+      required: [id, name, displayName, apiServerUrl, authType]
+    ClusterCreateRequest:
+      type: object
+      properties:
+        name:
+          type: string
+        displayName:
+          type: string
+        apiServerUrl:
+          type: string
+        authType:
+          type: string
+          enum: [kubeconfig, token]
+        kubeconfig:
+          type: string
+        saToken:
+          type: string
+        caCert:
+          type: string
+        description:
+          type: string
+        webhookUrl:
+          type: string
+        notifyEnabled:
+          type: boolean
+      required: [name, displayName, apiServerUrl, authType]
+    ClusterUpdateRequest:
+      type: object
+      properties:
+        displayName:
+          type: string
+        apiServerUrl:
+          type: string
+        authType:
+          type: string
+          enum: [kubeconfig, token]
+        kubeconfig:
+          type: string
+        saToken:
+          type: string
+        caCert:
+          type: string
+        description:
+          type: string
+        webhookUrl:
+          type: string
+          nullable: true
+        notifyEnabled:
+          type: boolean
+      required: [displayName, apiServerUrl, authType]
+    ClusterTestResponse:
+      type: object
+      properties:
+        success:
+          type: boolean
+        version:
+          type: string
+        error:
+          type: string
+      required: [success]
+    DashboardCluster:
+      type: object
+      properties:
+        id:
+          type: string
+        name:
+          type: string
+        status:
+          type: string
+        nodes:
+          type: integer
+        pods:
+          type: integer
+    DashboardEvent:
+      type: object
+      properties:
+        cluster:
+          type: string
+        type:
+          type: string
+        reason:
+          type: string
+        message:
+          type: string
+        namespace:
+          type: string
+        object:
+          type: string
+        time:
+          type: string
+          format: date-time
+    DashboardSummary:
+      type: object
+      properties:
+        clusterCount:
+          type: integer
+        podCount:
+          type: integer
+        deploymentCount:
+          type: integer
+        todayReleaseCount:
+          type: integer
+        clusters:
+          type: array
+          items:
+            $ref: '#/components/schemas/DashboardCluster'
+        events:
+          type: array
+          items:
+            $ref: '#/components/schemas/DashboardEvent'
+      required: [clusterCount, podCount, deploymentCount, todayReleaseCount, clusters, events]
+    ReleaseRecord:
+      type: object
+      properties:
+        id:
+          type: string
+        appTemplateId:
+          type: string
+          nullable: true
+        clusterId:
+          type: string
+        namespace:
+          type: string
+          nullable: true
+        name:
+          type: string
+        values:
+          nullable: true
+        status:
+          type: string
+        revision:
+          type: integer
+        message:
+          type: string
+          nullable: true
+        releasedBy:
+          type: string
+          nullable: true
+        operator:
+          type: string
+          nullable: true
+        createdAt:
+          type: string
+          format: date-time
+        updatedAt:
+          type: string
+          format: date-time
+    PanelSummary:
+      type: object
+      properties:
+        namespace:
+          type: string
+        installed:
+          type: boolean
+        deploymentCount:
+          type: integer
+        readyDeploymentCount:
+          type: integer
+        podCount:
+          type: integer
+        runningPodCount:
+          type: integer
+        serviceCount:
+          type: integer
+        keyDeployments:
+          type: array
+          items:
+            type: object
+            properties:
+              name:
+                type: string
+              ready:
+                type: boolean
+              readyReplicas:
+                type: integer
+              replicas:
+                type: integer
+    PlatformPanelsResponse:
+      type: object
+      properties:
+        cluster:
+          type: object
+          properties:
+            id:
+              type: string
+            name:
+              type: string
+            status:
+              type: string
+        panels:
+          type: object
+          properties:
+            argocd:
+              $ref: '#/components/schemas/PanelSummary'
+            prometheus:
+              allOf:
+                - $ref: '#/components/schemas/PanelSummary'
+                - type: object
+                  properties:
+                    hasGrafana:
+                      type: boolean
+            istio:
+              allOf:
+                - $ref: '#/components/schemas/PanelSummary'
+                - type: object
+                  properties:
+                    ingressGatewayReady:
+                      type: boolean
+        error:
+          type: string

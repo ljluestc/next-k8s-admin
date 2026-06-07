@@ -1,0 +1,12 @@
+postgres_password      = "k8sadmin"
+encryption_key         = "456091a3b35fb56a2200e062bb4826bbbe2030fa08f866b98aba7cae37c1d5c3"
+aws_credentials_dir    = "/home/calelin/.aws"
+app_image              = "twwch/k8s-admin:latest"
+app_external_port      = 3000
+postgres_external_port = 5433
+next_public_ws_url     = "ws://localhost:3000/ws"
+smtp_host              = ""
+smtp_port              = 587
+smtp_user              = ""
+smtp_pass              = ""
+smtp_from              = "noreply@k8sadmin.local"

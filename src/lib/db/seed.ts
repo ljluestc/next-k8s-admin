@@ -53,7 +53,7 @@ async function seed() {
   const existingAdmin = await db.select().from(users).where(eq(users.username, 'admin')).limit(1);
   if (existingAdmin.length > 0) { console.log('Admin user already exists, skipping.'); return; }
 
-  const adminPassword = crypto.randomBytes(8).toString('hex');
+  const adminPassword = 'admin@k8s';
   const passwordHash = await hashPassword(adminPassword);
   const [adminUser] = await db.insert(users).values({
     username: 'admin', email: 'admin@k8sadmin.local',

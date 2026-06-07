@@ -79,6 +79,18 @@ export default function LoginPage() {
             <p style={{ color: '#94a3b8', marginBottom: 36, fontSize: 14 }}>
               登录以继续管理集群
             </p>
+            <div style={{
+              backgroundColor: '#f0f9ff',
+              border: '1px solid #bfdbfe',
+              borderRadius: 8,
+              padding: '12px 14px',
+              marginBottom: 20,
+              fontSize: 13,
+            }}>
+              <div style={{ color: '#1e40af', fontWeight: 500, marginBottom: 4 }}>默认账号密码：</div>
+              <div style={{ color: '#1e3a8a' }}>用户名：<strong>admin</strong></div>
+              <div style={{ color: '#1e3a8a' }}>密码：<strong>admin@k8s</strong></div>
+            </div>
             <Tabs
               centered
               items={[

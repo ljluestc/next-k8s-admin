@@ -8,9 +8,10 @@ interface StatCardProps {
   gradient: string;
   icon: ReactNode;
   footer?: string;
+  onClick?: () => void;
 }
 
-export default function StatCard({ title, value, gradient, icon, footer }: StatCardProps) {
+export default function StatCard({ title, value, gradient, icon, footer, onClick }: StatCardProps) {
   return (
     <div style={{
       background: gradient,
@@ -18,7 +19,8 @@ export default function StatCard({ title, value, gradient, icon, footer }: StatC
       padding: '20px 24px',
       color: 'white',
       height: '100%',
-    }}>
+      cursor: onClick ? 'pointer' : 'default',
+    }} onClick={onClick}>
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
         <div>
           <div style={{ fontSize: 13, opacity: 0.85, marginBottom: 8 }}>{title}</div>
