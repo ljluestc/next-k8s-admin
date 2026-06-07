@@ -27,7 +27,12 @@ export async function GET(_req: NextRequest, { params }: { params: Promise<{ id:
   // Get role bindings
   const bindings = await db.select().from(userRoleBindings).where(eq(userRoleBindings.userId, id));
 
-  return NextResponse.json({ ...user, roleBindings: bindings });
+  return NextResponse.json({
+    ...user,
+    lastLoginAt: user.lastLoginAt ? new Date(user.lastLoginAt).toISOString() : null,
+    createdAt: user.createdAt ? new Date(user.createdAt).toISOString() : null,
+    roleBindings: bindings,
+  });
 }
 
 export async function PUT(req: NextRequest, { params }: { params: Promise<{ id: string }> }) {

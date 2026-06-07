@@ -43,6 +43,8 @@ export async function GET(req: NextRequest) {
     .orderBy(desc(auditLogs.createdAt))
     .limit(pageSize)
     .offset((page - 1) * pageSize);
-
-  return NextResponse.json(logs);
+  return NextResponse.json(logs.map((log) => ({
+    ...log,
+    createdAt: log.createdAt ? new Date(log.createdAt).toISOString() : null,
+  })));
 }

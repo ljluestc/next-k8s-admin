@@ -26,6 +26,8 @@ export async function GET() {
   const allBindings = await db.select().from(userRoleBindings);
   const result = list.map((u) => ({
     ...u,
+    lastLoginAt: u.lastLoginAt ? new Date(u.lastLoginAt).toISOString() : null,
+    createdAt: u.createdAt ? new Date(u.createdAt).toISOString() : null,
     roleBindings: allBindings.filter((b) => b.userId === u.id),
   }));
 
