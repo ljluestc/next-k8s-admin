@@ -98,6 +98,12 @@ async function generateEksToken(clusterName: string, region: string): Promise<st
   const token = await getSignedUrl(clusterName, region);
   return token;
 }
+function enableInsecureTlsForKubeconfigClusters(kc: k8s.KubeConfig) {
+  kc.clusters = kc.clusters.map((clusterConfig) => ({
+    ...clusterConfig,
+    skipTLSVerify: true,
+  }));
+}
 
 async function buildKubeConfig(clusterId: string): Promise<{ kc: k8s.KubeConfig; isEks: boolean }> {
   const [cluster] = await db.select().from(clusters).where(eq(clusters.id, clusterId)).limit(1);
@@ -109,6 +115,7 @@ async function buildKubeConfig(clusterId: string): Promise<{ kc: k8s.KubeConfig;
   if (cluster.authType === 'kubeconfig' && cluster.kubeconfig) {
     const kubeconfigStr = decrypt(cluster.kubeconfig);
     kc.loadFromString(kubeconfigStr);
+    enableInsecureTlsForKubeconfigClusters(kc);
     isEks = await resolveEksAuth(kc, kubeconfigStr);
   } else if (cluster.authType === 'token' && cluster.saToken) {
     const clusterConfig = {
