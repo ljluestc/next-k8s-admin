@@ -109,6 +109,9 @@ async function buildKubeConfig(clusterId: string): Promise<{ kc: k8s.KubeConfig;
   if (cluster.authType === 'kubeconfig' && cluster.kubeconfig) {
     const kubeconfigStr = decrypt(cluster.kubeconfig);
     kc.loadFromString(kubeconfigStr);
+    kc.clusters.forEach((clusterConfig) => {
+      (clusterConfig as any).skipTLSVerify = true;
+    });
     isEks = await resolveEksAuth(kc, kubeconfigStr);
   } else if (cluster.authType === 'token' && cluster.saToken) {
     const clusterConfig = {
