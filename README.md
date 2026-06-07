@@ -186,6 +186,50 @@ npm run dev
 
 打开 http://localhost:3000。首次启动时，系统会自动创建数据库、运行迁移并生成管理员账号（密码在控制台输出中查看）。
 
+### 本地 Kubernetes 集群接入（Kind Onboarding）
+
+如需快速在本地验证“集群接入/资源管理”功能，推荐使用 [kind](https://kind.sigs.k8s.io/) 创建一个本地集群并通过 kubeconfig 接入。
+
+1) 创建本地集群：
+
+```bash
+kind create cluster --name k8s-admin-local
+kubectl cluster-info --context kind-k8s-admin-local
+kubectl get nodes --context kind-k8s-admin-local
+```
+
+2) 导出最小 kubeconfig（用于粘贴到系统）：
+
+```bash
+CTX=kind-k8s-admin-local
+kubectl config view --raw --minify --context "$CTX" > /tmp/k8s-admin-local.kubeconfig
+kubectl config view --raw --minify --context "$CTX" -o jsonpath='{.clusters[0].cluster.server}'; echo
+```
+
+3) 登录系统并添加集群（`/clusters/new`）：
+
+- 集群标识：如 `kind-local`
+- 显示名称：如 `Kind Local`
+- API Server URL：使用上一步输出的 server 地址
+- 认证方式：`Kubeconfig`
+- Kubeconfig 内容：粘贴 `/tmp/k8s-admin-local.kubeconfig` 文件内容
+
+4) 在“集群列表”点击“测试”验证连通性，成功后进入资源页面检查 `Namespaces/Pods`。
+
+5) （可选）创建演示资源：
+
+```bash
+kubectl create ns demo --context kind-k8s-admin-local
+kubectl create deployment nginx --image=nginx -n demo --context kind-k8s-admin-local
+kubectl get pods -n demo --context kind-k8s-admin-local
+```
+
+6) 清理本地集群：
+
+```bash
+kind delete cluster --name k8s-admin-local
+```
+
 ### Docker 部署
 
 ```bash
@@ -200,6 +244,34 @@ docker compose up -d
 ```
 
 `docker_run.sh` 会挂载 `~/.aws`（只读）和 `.env` 到容器中。
+
+### Terraform 管理部署（Docker）
+
+项目提供 `terraform/` 目录，可使用 Terraform 统一管理 `k8s-admin` 与 PostgreSQL 容器生命周期（创建、变更、销毁）。
+
+```bash
+cd terraform
+cp terraform.tfvars.example terraform.tfvars
+# 编辑 terraform.tfvars，至少填写 postgres_password 和 encryption_key
+
+terraform init
+terraform plan
+terraform apply
+```
+
+默认会创建：
+
+- Docker network：`k8s-admin-network`
+- Docker volume：`k8s-admin-pgdata`
+- PostgreSQL 容器：`k8s-admin-postgres-db`（默认映射到主机 `5433`）
+- 应用容器：`k8s-admin`（默认映射到主机 `3000`）
+
+销毁部署：
+
+```bash
+cd terraform
+terraform destroy
+```
 
 ### 环境变量
 
