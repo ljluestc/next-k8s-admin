@@ -1,0 +1,20 @@
+postgres_password   = "change-me"
+encryption_key      = "0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef"
+aws_credentials_dir = "/home/your-user/.aws"
+
+# Optional overrides
+# app_image         = "twwch/k8s-admin:latest"
+# app_external_port = 3000
+# postgres_external_port = 5433
+# smtp_host         = "smtp.example.com"
+# smtp_port         = 587
+# smtp_user         = "smtp-user"
+# smtp_pass         = "smtp-password"
+# smtp_from         = "noreply@example.com"
+
+# Optional: Terraform-managed local Kind cluster
+# create_kind_cluster          = true
+# register_kind_cluster_in_app = true
+# kind_cluster_name            = "k8s-admin-kind"
+# kind_cluster_display_name    = "Terraform Kind Cluster"
+# kind_kubeconfig_path         = "./.generated/kubeconfig-kind.yaml"
