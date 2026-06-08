@@ -230,6 +230,84 @@ kubectl get pods -n demo --context kind-k8s-admin-local
 kind delete cluster --name k8s-admin-local
 ```
 
+### ArgoCD GitOps 全量接管（Cluster Onboarding）
+
+项目内置了 ArgoCD `Application` 清单，可将平台组件与安全组件纳入 GitOps。当前采用「仓库内 Helm wrapper chart + ArgoCD Application」的统一结构：
+
+- `deploy/argocd/root-application.yaml`（root app-of-apps）
+- `deploy/argocd/apps/platform-applications.yaml`（ArgoCD 自身、监控栈）
+- `deploy/argocd/apps/access-control-applications.yaml`（Kyverno、Gatekeeper、Trivy、Falco）
+- `deploy/argocd/apps/next-k8s-admin-application.yaml`（next-k8s-admin 应用）
+- `deploy/argocd/apps/guestbook-application.yaml`（示例业务应用）
+- `deploy/apps/<app-name>/Chart.yaml`（每个 Helm chart 的 GitOps wrapper）
+
+应用到已安装 ArgoCD 的集群：
+
+```bash
+kubectl --context kind-k8s-admin-local apply -f deploy/argocd/root-application.yaml
+kubectl --context kind-k8s-admin-local apply -f deploy/argocd/apps
+kubectl --context kind-k8s-admin-local -n argocd get applications
+```
+
+验证全部应用已收敛为 `Synced / Healthy` 后，可在 ArgoCD UI 的 `Applications` 页面看到平台与业务工作负载统一由 GitOps 管理。
+
+也可使用脚本一键同步：
+
+```bash
+./scripts/gitops/bootstrap_argocd.sh
+```
+
+本地开发下如果希望「改完清单立即反映到 ArgoCD」，可开启 watcher：
+
+```bash
+./scripts/gitops/watch_argocd_local.sh
+```
+
+该 watcher 会监听 `deploy/argocd/**/*.yaml` 与 `deploy/apps/**/*.yaml` 的变更并自动执行同步。
+
+### Helm chart 转换为 ArgoCD（可复用脚手架）
+
+仓库提供脚本 `scripts/gitops/convert_helm_chart_to_argocd.py`，用于将一个上游 Helm chart 快速转换为仓库内 ArgoCD 可管理结构（`deploy/apps/<app>/Chart.yaml` + `values.yaml` + `Application` 清单）：
+
+```bash
+python3 scripts/gitops/convert_helm_chart_to_argocd.py \
+  --app-name ingress-nginx \
+  --chart-name ingress-nginx \
+  --chart-version 4.9.1 \
+  --chart-repository https://kubernetes.github.io/ingress-nginx \
+  --namespace kube-system \
+  --repo-url https://github.com/ljluestc/next-k8s-admin \
+  --target-revision private/feature/auth-oidc
+```
+
+如果需要将生成的 `Application` 直接写入文件：
+
+```bash
+python3 scripts/gitops/convert_helm_chart_to_argocd.py \
+  --app-name ingress-nginx \
+  --chart-name ingress-nginx \
+  --chart-version 4.9.1 \
+  --chart-repository https://kubernetes.github.io/ingress-nginx \
+  --namespace kube-system \
+  --repo-url https://github.com/ljluestc/next-k8s-admin \
+  --target-revision private/feature/auth-oidc \
+  --application-output deploy/argocd/apps/ingress-nginx-application.yaml
+```
+
+### ArgoCD 发布与回滚（CNCF 组件）
+
+本项目中每个组件是独立的 ArgoCD `Application`（例如 `kyverno-access-control`、`gatekeeper-access-control`、`trivy-access-control`、`falco-access-control`、`platform-monitoring`）。
+
+发布（升级）方式：
+
+1. 修改对应 `deploy/apps/<app>/Chart.yaml` 里的 `dependencies[].version`（chart 版本）；
+2. 同步清单（`./scripts/gitops/bootstrap_argocd.sh` 或 watcher 自动同步）；
+3. 在 ArgoCD UI 观察应用进入 `Synced / Healthy`。
+
+回滚方式：
+- GitOps 回滚：将 `dependencies[].version` 改回旧版本并再次同步；
+- ArgoCD UI 回滚：在应用 `History and Rollback` 中选择历史版本回滚。
+
 ### Docker 部署
 
 ```bash
@@ -305,6 +383,10 @@ go run ./cmd/adminctl --base-url http://localhost:3000 --username admin --passwo
 | `SMTP_USER` | SMTP 用户名 | - |
 | `SMTP_PASS` | SMTP 密码 | - |
 | `SMTP_FROM` | 发件人邮箱 | `noreply@k8sadmin.local` |
+| `OIDC_<PROVIDER>_CLIENT_ID` | SSO Client ID（`PROVIDER`: GITHUB/GOOGLE/KEYCLOAK/OKTA/COGNITO/AZURE/GENERIC） | - |
+| `OIDC_<PROVIDER>_CLIENT_SECRET` | SSO Client Secret | - |
+| `OIDC_<PROVIDER>_ISSUER` | OIDC Issuer（GitHub 可不填） | - |
+| `OIDC_<PROVIDER>_SCOPES` | SSO Scope 列表（空格分隔） | `openid profile email`（GitHub 默认 `read:user user:email`） |
 | `NEXT_PUBLIC_WS_URL` | WebSocket 地址 | `ws://localhost:3000/ws` |
 | `NEXT_PUBLIC_DASHBOARD_PANEL_URL` | 外部 Dashboard 面板地址（系统管理 > 平台面板） | - |
 | `NEXT_PUBLIC_ARGOCD_PANEL_URL` | Argo CD 面板地址（Dashboard > 运维面板） | - |

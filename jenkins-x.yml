@@ -1,0 +1,35 @@
+buildPack: none
+pipelineConfig:
+  pipelines:
+    pullRequest:
+      pipeline:
+        agent:
+          image: node:20
+        stages:
+          - name: validate
+            steps:
+              - name: install
+                command: npm
+                args:
+                  - ci
+              - name: build
+                command: npm
+                args:
+                  - run
+                  - build
+    release:
+      pipeline:
+        agent:
+          image: node:20
+        stages:
+          - name: release-build
+            steps:
+              - name: install
+                command: npm
+                args:
+                  - ci
+              - name: build
+                command: npm
+                args:
+                  - run
+                  - build
