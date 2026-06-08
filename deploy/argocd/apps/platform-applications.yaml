@@ -25,6 +25,54 @@ spec:
 apiVersion: argoproj.io/v1alpha1
 kind: Application
 metadata:
+  name: platform-istio
+  namespace: argocd
+spec:
+  project: default
+  source:
+    repoURL: https://github.com/ljluestc/next-k8s-admin
+    targetRevision: private/feature/auth-oidc
+    path: deploy/apps/platform-istio
+    helm:
+      releaseName: istio
+  destination:
+    server: https://kubernetes.default.svc
+    namespace: istio-system
+  syncPolicy:
+    automated:
+      prune: true
+      selfHeal: true
+    syncOptions:
+      - CreateNamespace=true
+      - ServerSideApply=true
+---
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata:
+  name: platform-tracing
+  namespace: argocd
+spec:
+  project: default
+  source:
+    repoURL: https://github.com/ljluestc/next-k8s-admin
+    targetRevision: private/feature/auth-oidc
+    path: deploy/apps/platform-tracing
+    helm:
+      releaseName: jaeger
+  destination:
+    server: https://kubernetes.default.svc
+    namespace: observability
+  syncPolicy:
+    automated:
+      prune: true
+      selfHeal: true
+    syncOptions:
+      - CreateNamespace=true
+      - ServerSideApply=true
+---
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata:
   name: platform-monitoring
   namespace: argocd
 spec:
