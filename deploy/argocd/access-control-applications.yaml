@@ -27,6 +27,8 @@ kind: Application
 metadata:
   name: trivy-access-control
   namespace: argocd
+  annotations:
+    gitops.next-k8s-admin.io/release-marker: "demo-v1"
 spec:
   project: default
   source:
