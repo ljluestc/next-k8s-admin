@@ -8,7 +8,7 @@ service:
   port: 80
 containerPort: 80
 release:
-  marker: "v2"
+  marker: "v3"
 probes:
   readinessPath: /
   livenessPath: /
