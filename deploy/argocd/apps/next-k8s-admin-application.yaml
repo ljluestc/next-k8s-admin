@@ -8,7 +8,9 @@ spec:
   source:
     repoURL: https://github.com/ljluestc/next-k8s-admin
     targetRevision: private/feature/auth-oidc
-    path: deploy/apps/next-k8s-admin
+    path: deploy/charts/next-k8s-admin
+    helm:
+      releaseName: next-k8s-admin
   destination:
     server: https://kubernetes.default.svc
     namespace: next-k8s-admin
