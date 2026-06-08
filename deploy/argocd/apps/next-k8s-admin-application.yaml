@@ -1,0 +1,21 @@
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata:
+  name: next-k8s-admin
+  namespace: argocd
+spec:
+  project: default
+  source:
+    repoURL: https://github.com/ljluestc/next-k8s-admin
+    targetRevision: private/feature/auth-oidc
+    path: deploy/apps/next-k8s-admin
+  destination:
+    server: https://kubernetes.default.svc
+    namespace: next-k8s-admin
+  syncPolicy:
+    automated:
+      prune: true
+      selfHeal: true
+    syncOptions:
+      - CreateNamespace=true
+      - ServerSideApply=true
