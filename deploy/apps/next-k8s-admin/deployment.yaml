@@ -16,7 +16,7 @@ spec:
       labels:
         app.kubernetes.io/name: next-k8s-admin
       annotations:
-        gitops.release/version: "v1"
+        gitops.release/version: "v2"
     spec:
       containers:
         - name: next-k8s-admin
