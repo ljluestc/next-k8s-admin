@@ -1,0 +1,21 @@
+name: GitOps CI
+
+on:
+  push:
+  workflow_dispatch:
+
+jobs:
+  validate-gitops:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+      - name: Validate GitOps directories
+        run: |
+          test -d deploy/argocd
+          test -d deploy/apps
+          echo "GitOps directories are present"
+      - name: Show commit
+        run: |
+          echo "Branch: $GITHUB_REF"
+          echo "Commit: $GITHUB_SHA"
