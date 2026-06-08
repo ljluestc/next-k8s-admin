@@ -8,7 +8,7 @@ spec:
   source:
     repoURL: https://github.com/ljluestc/next-k8s-admin
     targetRevision: private/feature/auth-oidc
-    path: deploy/charts/next-k8s-admin
+    path: deploy/apps/next-k8s-admin
     helm:
       releaseName: next-k8s-admin
   destination:
