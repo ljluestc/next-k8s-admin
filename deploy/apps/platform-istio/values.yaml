@@ -8,6 +8,3 @@ istiod:
       memory: 512Mi
     limits:
       memory: 1Gi
-istio-ingressgateway:
-  service:
-    type: ClusterIP
