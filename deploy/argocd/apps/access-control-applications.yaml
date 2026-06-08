@@ -6,9 +6,9 @@ metadata:
 spec:
   project: default
   source:
-    repoURL: https://kyverno.github.io/kyverno
-    chart: kyverno
-    targetRevision: 3.8.1
+    repoURL: https://github.com/ljluestc/next-k8s-admin
+    targetRevision: private/feature/auth-oidc
+    path: deploy/apps/kyverno-access-control
     helm:
       releaseName: kyverno
   destination:
@@ -30,9 +30,9 @@ metadata:
 spec:
   project: default
   source:
-    repoURL: https://aquasecurity.github.io/helm-charts/
-    chart: trivy-operator
-    targetRevision: 0.33.1
+    repoURL: https://github.com/ljluestc/next-k8s-admin
+    targetRevision: private/feature/auth-oidc
+    path: deploy/apps/trivy-access-control
     helm:
       releaseName: trivy-operator
   destination:
@@ -54,9 +54,9 @@ metadata:
 spec:
   project: default
   source:
-    repoURL: https://falcosecurity.github.io/charts
-    chart: falco
-    targetRevision: 9.0.0
+    repoURL: https://github.com/ljluestc/next-k8s-admin
+    targetRevision: private/feature/auth-oidc
+    path: deploy/apps/falco-access-control
     helm:
       releaseName: falco
   destination:
@@ -78,9 +78,9 @@ metadata:
 spec:
   project: default
   source:
-    repoURL: https://open-policy-agent.github.io/gatekeeper/charts
-    chart: gatekeeper
-    targetRevision: 3.22.2
+    repoURL: https://github.com/ljluestc/next-k8s-admin
+    targetRevision: private/feature/auth-oidc
+    path: deploy/apps/gatekeeper-access-control
     helm:
       releaseName: gatekeeper
   destination:

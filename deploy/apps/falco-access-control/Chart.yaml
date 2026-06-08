@@ -1,0 +1,7 @@
+apiVersion: v2
+name: falco-access-control
+version: 1.0.0
+dependencies:
+  - name: falco
+    version: 9.0.0
+    repository: https://falcosecurity.github.io/charts

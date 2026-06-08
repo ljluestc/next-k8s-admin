@@ -1,0 +1,7 @@
+apiVersion: v2
+name: gatekeeper-access-control
+version: 1.0.0
+dependencies:
+  - name: gatekeeper
+    version: 3.22.2
+    repository: https://open-policy-agent.github.io/gatekeeper/charts

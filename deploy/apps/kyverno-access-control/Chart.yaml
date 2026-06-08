@@ -1,0 +1,7 @@
+apiVersion: v2
+name: kyverno-access-control
+version: 1.0.0
+dependencies:
+  - name: kyverno
+    version: 3.8.1
+    repository: https://kyverno.github.io/kyverno
